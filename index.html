@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendrier ORGA'NOTION</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .calendrier {
+      width: 100%;
+      height: 100%;
+      background: #f8c74b;
+      color: #fffbe2;
+      border-radius: 7px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(12px, 6%, 24px);
+      gap: 15px;
+    }
+
+    .entete {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .mois {
+      font-size: clamp(15px, 4vw, 19px);
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .navigation {
+      border: none;
+      background: transparent;
+      color: #fffbe2;
+      font-family: inherit;
+      font-size: 25px;
+      cursor: pointer;
+      padding: 0 5px;
+      opacity: 0.8;
+    }
+
+    .navigation:hover {
+      opacity: 1;
+    }
+
+    .jours {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px 1px;
+      text-align: center;
+    }
+
+    .jour-semaine {
+      font-size: clamp(12px, 3vw, 15px);
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .jour {
+      font-size: clamp(12px, 3vw, 15px);
+      font-weight: 500;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .aujourdhui {
+      background: #fffbe2;
+      color: #b88512;
+      font-weight: 800;
+    }
+
+    .jour:not(.aujourdhui):hover {
+      background: #ffffff25;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="calendrier">
+    <div class="entete">
+      <button class="navigation" id="precedent" aria-label="Mois précédent">‹</button>
+      <span class="mois" id="mois"></span>
+      <button class="navigation" id="suivant" aria-label="Mois suivant">›</button>
+    </div>
+
+    <div class="jours" id="jours"></div>
+  </div>
+
+  <script>
+    const formatDate = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Paris',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric'
+    });
+
+    function dateParis() {
+      const parties = formatDate.formatToParts(new Date());
+      const valeur = type =>
+        Number(parties.find(p => p.type === type).value);
+
+      return {
+        annee: valeur('year'),
+        mois: valeur('month') - 1,
+        jour: valeur('day')
+      };
+    }
+
+    let aujourdHui = dateParis();
+    let annee = aujourdHui.annee;
+    let mois = aujourdHui.mois;
+
+    function afficherCalendrier() {
+      aujourdHui = dateParis();
+
+      const titre = new Intl.DateTimeFormat('fr-FR', {
+        month: 'long',
+        year: 'numeric'
+      }).format(new Date(annee, mois, 1));
+
+      document.getElementById('mois').textContent =
+        titre.charAt(0).toUpperCase() + titre.slice(1);
+
+      const grille = document.getElementById('jours');
+      grille.innerHTML = '';
+
+      ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(jour => {
+        const element = document.createElement('div');
+        element.className = 'jour-semaine';
+        element.textContent = jour;
+        grille.appendChild(element);
+      });
+
+      const decalage = (new Date(annee, mois, 1).getDay() + 6) % 7;
+
+      for (let i = 0; i < decalage; i++) {
+        grille.appendChild(document.createElement('div'));
+      }
+
+      const nombreJours = new Date(annee, mois + 1, 0).getDate();
+
+      for (let jour = 1; jour <= nombreJours; jour++) {
+        const element = document.createElement('div');
+        element.className = 'jour';
+
+        if (
+          jour === aujourdHui.jour &&
+          mois === aujourdHui.mois &&
+          annee === aujourdHui.annee
+        ) {
+          element.classList.add('aujourdhui');
+        }
+
+        element.textContent = jour;
+        grille.appendChild(element);
+      }
+    }
+
+    document.getElementById('precedent').addEventListener('click', () => {
+      mois--;
+      if (mois < 0) {
+        mois = 11;
+        annee--;
+      }
+      afficherCalendrier();
+    });
+
+    document.getElementById('suivant').addEventListener('click', () => {
+      mois++;
+      if (mois > 11) {
+        mois = 0;
+        annee++;
+      }
+      afficherCalendrier();
+    });
+
+    afficherCalendrier();
+
+    // Actualise le jour surligné après minuit.
+    setInterval(afficherCalendrier, 60000);
+  </script>
+</body>
+</html>
